@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User 2 Chat</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #chat-container {
+            width: 400px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #header {
+            background-color: #0084ff;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        #messages {
+            height: 400px;
+            padding: 15px;
+            background-color: #e9e9e9;
+            overflow-y: auto;
+            word-wrap: break-word;
+            flex: 1;
+        }
+
+        #messages p {
+            background-color: #0084ff;
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 5px 0;
+            width: fit-content;
+            max-width: 80%;
+        }
+
+        #messages p.self {
+            background-color: #f5f5f5;
+            color: #333;
+            margin-left: auto;
+        }
+
+        #input-container {
+            display: flex;
+            border-top: 1px solid #ccc;
+            padding: 10px;
+            background-color: #fff;
+        }
+
+        #messageBox {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        #send {
+            margin-left: 10px;
+            padding: 0 20px;
+            border: none;
+            background-color: #0084ff;
+            color: white;
+            font-size: 14px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        #send:hover {
+            background-color: #006bbd;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="chat-container">
+        <div id="header">User 2</div> 
+        <div id="messages"></div>
+        <div id="input-container">
+            <input type="text" id="messageBox" placeholder="Type your message here" />
+            <button id="send">Send</button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const sendBtn = document.querySelector('#send');
+            const messages = document.querySelector('#messages');
+            const messageBox = document.querySelector('#messageBox');
+
+            let ws;
+
+            function showMessage(message, isSelf = false) {
+                const messageElement = document.createElement('p');
+                messageElement.textContent = message;
+                if (isSelf) {
+                    messageElement.classList.add('self');
+                }
+                messages.appendChild(messageElement);
+                messages.scrollTop = messages.scrollHeight;
+                messageBox.value = '';
+            }
+
+            function init() {
+                if (ws) {
+                    ws.onerror = ws.onopen = ws.onclose = null;
+                    ws.close();
+                }
+
+                ws = new WebSocket('ws://localhost:8080');
+                  // for ngrok
+                //   ws = new WebSocket('wss://2366-136-232-130-202.ngrok-free.app');
+
+                ws.onopen = () => {
+                    console.log('Connection opened for User 2!');
+                };
+
+                ws.onmessage = ({ data }) => {
+                    console.log(`Message received from server: ${data}`);
+                    showMessage(data);
+                };
+
+                ws.onerror = (error) => {
+                    console.error(`WebSocket error: ${error}`);
+                };
+
+                ws.onclose = () => {
+                    console.log('WebSocket connection closed');
+                    ws = null;
+                };
+            }
+
+            sendBtn.onclick = function () {
+                if (!ws) {
+                    showMessage("No WebSocket connection :(", true);
+                    return;
+                }
+
+                const message = messageBox.value;
+                if (message) {
+                    ws.send(`User2: ${message}`);
+                    console.log(`Message sent to server: ${message}`);
+                    showMessage(`You: ${message}`, true); // Display self message
+                }
+            }
+
+            init();
+        })();
+    </script>
+</body>
+
+</html>
